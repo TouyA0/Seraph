@@ -5,26 +5,30 @@ import httpx
 from app.core.connector import BaseConnector, ConnectorResult, Finding, FindingCategory, Severity
 from app.core.detector import ArtifactType
 
-_BASE = "https://threatfox-api.abuse.ch/api/v1/"
+import os
 
-_SEV_MAP = {
-    "high_confidence": Severity.HIGH,
-    "medium_confidence": Severity.MEDIUM,
-    "low_confidence": Severity.LOW,
-}
+_BASE = "https://threatfox-api.abuse.ch/api/v1/"
 
 
 class ThreatFoxConnector(BaseConnector):
     name = "threatfox"
     supported_types = [ArtifactType.IP, ArtifactType.DOMAIN, ArtifactType.URL, ArtifactType.HASH]
-    requires_key = False
+    requires_key = True
     is_active = False
+
+    def is_configured(self) -> bool:
+        return bool(os.getenv("THREATFOX_API_KEY"))
 
     async def enrich(self, artifact: str, artifact_type: ArtifactType) -> ConnectorResult:
         t0 = time.monotonic()
         try:
+            api_key = os.getenv("THREATFOX_API_KEY", "")
             async with httpx.AsyncClient(timeout=10) as client:
-                r = await client.post(_BASE, json={"query": "search_ioc", "search_term": artifact})
+                r = await client.post(
+                    _BASE,
+                    json={"query": "search_ioc", "search_term": artifact},
+                    headers={"Auth-Key": api_key},
+                )
                 r.raise_for_status()
                 data = r.json()
         except Exception as e:

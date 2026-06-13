@@ -16,12 +16,19 @@ class CrtShConnector(BaseConnector):
     async def enrich(self, artifact: str, artifact_type: ArtifactType) -> ConnectorResult:
         t0 = time.monotonic()
         try:
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with httpx.AsyncClient(timeout=20) as client:
                 r = await client.get(
                     "https://crt.sh/",
                     params={"q": f"%.{artifact}", "output": "json"},
                     headers={"Accept": "application/json"},
                 )
+                if r.status_code in (502, 503, 504):
+                    return ConnectorResult(
+                        connector=self.name, status="error",
+                        artifact=artifact, artifact_type=artifact_type,
+                        error=f"crt.sh indisponible ({r.status_code}) — réessayer plus tard",
+                        latency_ms=int((time.monotonic() - t0) * 1000),
+                    )
                 r.raise_for_status()
                 data = r.json()
         except Exception as e:
