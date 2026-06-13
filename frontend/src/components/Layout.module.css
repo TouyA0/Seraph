@@ -113,6 +113,10 @@
   background: var(--text3);
 }
 
+.aiDotOk {
+  background: var(--ok);
+}
+
 .aiStatusLine {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;

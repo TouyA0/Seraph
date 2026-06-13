@@ -31,10 +31,10 @@ services:
       - backend
     restart: unless-stopped
 
-  # ollama:
-  #   image: ollama/ollama
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ./models:/root/.ollama
-  #   restart: unless-stopped
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./models:/root/.ollama
+    restart: unless-stopped

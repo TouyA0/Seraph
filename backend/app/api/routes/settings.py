@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app.core.registry import get_connector_catalog
 from app.services.cache import ping as redis_ping
+from app.services import ai
 
 router = APIRouter()
 
@@ -34,6 +35,7 @@ _CONNECTOR_LABELS = {
 async def list_connectors():
     catalog = get_connector_catalog()
     redis_ok = await redis_ping()
+    ai_available = await ai.is_available()
     return {
         "connectors": [
             {
@@ -43,7 +45,11 @@ async def list_connectors():
             }
             for c in catalog
         ],
-        "cache": {
-            "redis": redis_ok,
+        "cache": {"redis": redis_ok},
+        "ai": {
+            "available": ai_available,
+            "enabled": ai._ENABLED,
+            "model": ai._MODEL,
+            "endpoint": ai._OPENAI_URL or ai._OLLAMA_URL,
         },
     }

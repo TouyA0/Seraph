@@ -32,6 +32,7 @@ class InvestigateResponse(BaseModel):
     type: ArtifactType
     results: list[ConnectorResult]
     total_findings: int
+    ai_report: dict | None = None
 
 
 @router.post("/detect", response_model=DetectResponse)
@@ -65,6 +66,7 @@ async def run_investigation(req: InvestigateRequest):
         type=artifact_type,
         results=results,
         total_findings=total_findings,
+        ai_report=None,
     )
 
 

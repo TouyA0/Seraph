@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { runInvestigation, type InvestigateResponse, type ConnectorResult, type Finding } from '@/utils/api'
+import { runInvestigation, fetchAIReport, type InvestigateResponse, type ConnectorResult, type Finding } from '@/utils/api'
+import AIReportCard, { type AIReport } from '@/components/AIReportCard'
+import ChatPanel from '@/components/ChatPanel'
 import styles from './InvestigatePage.module.css'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -40,27 +42,29 @@ function SeverityBadge({ sev }: { sev: string }) {
 function SourceCard({ result }: { result: ConnectorResult }) {
   const [open, setOpen] = useState(false)
   const label = CONNECTOR_LABELS[result.connector] ?? result.connector
+  const isUnconfigured = result.status === 'unconfigured'
 
   return (
-    <div className={styles.sourceCard}>
-      <div className={styles.sourceHeader} onClick={() => setOpen(!open)}>
+    <div className={`${styles.sourceCard} ${isUnconfigured ? styles.sourceUnconfigured : ''}`}>
+      <div className={styles.sourceHeader} onClick={() => !isUnconfigured && setOpen(!open)}>
         <div className={styles.sourceLeft}>
           <span className={`${styles.sourceDot} ${styles[`dot_${result.status}`]}`} />
           <span className={styles.sourceName}>{label}</span>
-          {result.latency_ms !== undefined && (
+          {result.latency_ms !== undefined && !isUnconfigured && (
             <span className={styles.sourceLatency}>{result.latency_ms}ms</span>
           )}
         </div>
         <div className={styles.sourceRight}>
-          {result.findings.length > 0 && (
+          {isUnconfigured && <span className={styles.unconfiguredLabel}>Clé manquante — Réglages</span>}
+          {!isUnconfigured && result.findings.length > 0 && (
             <span className={styles.findingCount}>{result.findings.length} finding{result.findings.length > 1 ? 's' : ''}</span>
           )}
           {result.status === 'error' && <span className={styles.errLabel}>Erreur</span>}
-          <span className={styles.chevron}>{open ? '▴' : '▾'}</span>
+          {!isUnconfigured && <span className={styles.chevron}>{open ? '▴' : '▾'}</span>}
         </div>
       </div>
 
-      {open && (
+      {open && !isUnconfigured && (
         <div className={styles.sourceBody}>
           {result.error && <div className={styles.errorMsg}>{result.error}</div>}
           {result.raw && (
@@ -94,21 +98,31 @@ export default function InvestigatePage() {
   const [data, setData] = useState<InvestigateResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [aiReport, setAiReport] = useState<AIReport | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'findings' | 'sources'>('findings')
+  const [chatOpen, setChatOpen] = useState(false)
 
   useEffect(() => {
     if (!q) { navigate('/'); return }
     setLoading(true)
     setError(null)
+    setAiReport(null)
     runInvestigation(q, t)
-      .then(setData)
+      .then((res) => {
+        setData(res)
+        setAiLoading(true)
+        fetchAIReport(res.id)
+          .then(setAiReport)
+          .catch(() => null)
+          .finally(() => setAiLoading(false))
+      })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [q, t])
 
-  // Group findings by category, sorted by severity
   const allFindings: Finding[] = data
-    ? data.results.flatMap((r) => r.findings)
+    ? data.results.filter((r) => r.status !== 'unconfigured').flatMap((r) => r.findings)
     : []
 
   const byCategory: Record<string, Finding[]> = {}
@@ -124,6 +138,9 @@ export default function InvestigatePage() {
   const globalSev = allFindings.length
     ? SEV_ORDER.find((s) => allFindings.some((f) => f.severity === s)) ?? 'info'
     : 'info'
+
+  const okSources = data?.results.filter((r) => r.status === 'ok').length ?? 0
+  const totalSources = data?.results.filter((r) => r.status !== 'unconfigured').length ?? 0
 
   return (
     <div className={styles.root}>
@@ -141,8 +158,7 @@ export default function InvestigatePage() {
             <div className={styles.summary}>
               <SeverityBadge sev={globalSev} />
               <span className={styles.summaryText}>
-                {allFindings.length} finding{allFindings.length > 1 ? 's' : ''} ·{' '}
-                {data.results.filter((r) => r.status === 'ok').length}/{data.results.length} sources
+                {allFindings.length} finding{allFindings.length > 1 ? 's' : ''} · {okSources}/{totalSources} sources
               </span>
             </div>
           )}
@@ -163,44 +179,70 @@ export default function InvestigatePage() {
       )}
 
       {data && !loading && (
-        <>
-          <div className={styles.tabs}>
-            <button
-              className={`${styles.tab} ${activeTab === 'findings' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('findings')}
-            >
-              Findings ({allFindings.length})
-            </button>
-            <button
-              className={`${styles.tab} ${activeTab === 'sources' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('sources')}
-            >
-              Sources ({data.results.length})
-            </button>
+        <div className={styles.mainLayout}>
+          <div className={styles.mainContent}>
+            <div className={styles.tabs}>
+              <button
+                className={`${styles.tab} ${activeTab === 'findings' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('findings')}
+              >
+                Findings ({allFindings.length})
+              </button>
+              <button
+                className={`${styles.tab} ${activeTab === 'sources' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('sources')}
+              >
+                Sources ({data.results.length})
+              </button>
+            </div>
+
+            <div className={styles.content}>
+              {activeTab === 'findings' && (
+                <div className={styles.findingsPanel}>
+                  {/* Rapport IA en tête */}
+                  {aiLoading && (
+                    <div className={styles.noAi} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div className={styles.spinner} style={{ width: 14, height: 14, borderWidth: 2 }} />
+                      Synthèse IA en cours…
+                    </div>
+                  )}
+                  {!aiLoading && aiReport && (
+                    <AIReportCard report={aiReport} onChatOpen={() => setChatOpen(true)} />
+                  )}
+                  {!aiLoading && !aiReport && (
+                    <div className={styles.noAi}>
+                      IA non disponible — configurez Ollama pour obtenir une synthèse automatique.
+                    </div>
+                  )}
+
+                  {categories.length === 0 && (
+                    <div className={styles.empty}>Aucun finding — artefact inconnu des sources interrogées.</div>
+                  )}
+                  {categories.map((cat) => (
+                    <div key={cat} className={styles.category}>
+                      <div className={styles.categoryTitle}>{CAT_LABELS[cat] ?? cat}</div>
+                      {byCategory[cat].map((f, i) => <FindingRow key={i} f={f} />)}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {activeTab === 'sources' && (
+                <div className={styles.sourcesPanel}>
+                  {data.results.map((r) => <SourceCard key={r.connector} result={r} />)}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className={styles.content}>
-            {activeTab === 'findings' && (
-              <div className={styles.findingsPanel}>
-                {categories.length === 0 && (
-                  <div className={styles.empty}>Aucun finding — artefact inconnu des sources interrogées.</div>
-                )}
-                {categories.map((cat) => (
-                  <div key={cat} className={styles.category}>
-                    <div className={styles.categoryTitle}>{CAT_LABELS[cat] ?? cat}</div>
-                    {byCategory[cat].map((f, i) => <FindingRow key={i} f={f} />)}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeTab === 'sources' && (
-              <div className={styles.sourcesPanel}>
-                {data.results.map((r) => <SourceCard key={r.connector} result={r} />)}
-              </div>
-            )}
-          </div>
-        </>
+          {/* Chat latéral */}
+          {chatOpen && data && (
+            <ChatPanel
+              investigationId={data.id}
+              onClose={() => setChatOpen(false)}
+            />
+          )}
+        </div>
       )}
     </div>
   )

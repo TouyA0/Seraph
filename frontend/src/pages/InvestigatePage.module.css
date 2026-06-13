@@ -5,6 +5,20 @@
   flex-direction: column;
 }
 
+.mainLayout {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+.mainContent {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .header {
   padding: 16px 28px 0;
   border-bottom: 1px solid var(--line);
@@ -257,4 +271,17 @@
   color: var(--text3);
   font-size: 14px;
   padding: 40px;
+}
+
+.sourceUnconfigured { opacity: 0.45; }
+.unconfiguredLabel { font-size: 11px; color: var(--text3); font-style: italic; }
+
+.noAi {
+  font-size: 12px;
+  color: var(--text3);
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 16px;
 }

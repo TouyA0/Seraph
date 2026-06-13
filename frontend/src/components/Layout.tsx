@@ -1,4 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import styles from './Layout.module.css'
 
 const NAV = [
@@ -8,7 +9,21 @@ const NAV = [
   { to: '/settings', label: 'Réglages' },
 ]
 
+interface AIStatus { available: boolean; model: string; enabled: boolean }
+
 export default function Layout() {
+  const [aiStatus, setAIStatus] = useState<AIStatus | null>(null)
+
+  useEffect(() => {
+    fetch('/api/ai/status')
+      .then((r) => r.json())
+      .then(setAIStatus)
+      .catch(() => null)
+  }, [])
+
+  const aiOk = aiStatus?.available === true
+  const aiLabel = !aiStatus ? '…' : aiOk ? aiStatus.model : 'Non connectée'
+
   return (
     <div className={styles.root}>
       <aside className={styles.sidebar}>
@@ -45,10 +60,10 @@ export default function Layout() {
 
         <div className={styles.aiStatus}>
           <div className={styles.aiStatusHeader}>
-            <span className={styles.aiDot} />
+            <span className={`${styles.aiDot} ${aiOk ? styles.aiDotOk : ''}`} />
             <span style={{ fontSize: 12, fontWeight: 600 }}>IA locale</span>
           </div>
-          <div className={styles.aiStatusLine}>Non configurée</div>
+          <div className={styles.aiStatusLine}>{aiLabel}</div>
           <div className={styles.aiStatusNote}>Aucune donnée ne sort.</div>
         </div>
       </aside>
