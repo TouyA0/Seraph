@@ -1,0 +1,260 @@
+.root {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 16px 28px 0;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.back {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 12px;
+  transition: color 0.1s;
+}
+.back:hover { color: var(--text2); }
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  gap: 16px;
+}
+
+.artifact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.artifactValue {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artifactType {
+  background: var(--card2);
+  border: 1px solid var(--line2);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.summaryText {
+  font-size: 13px;
+  color: var(--text2);
+}
+
+/* Severity badges */
+.sevBadge {
+  display: inline-block;
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.sev_critical { background: rgba(242,85,85,.12); color: var(--sev-crit); border: 1px solid rgba(242,85,85,.25); }
+.sev_high     { background: rgba(242,145,61,.10); color: var(--sev-high); border: 1px solid rgba(242,145,61,.25); }
+.sev_medium   { background: rgba(223,186,73,.10); color: var(--sev-med); border: 1px solid rgba(223,186,73,.25); }
+.sev_low      { background: rgba(86,168,232,.10); color: var(--sev-low); border: 1px solid rgba(86,168,232,.25); }
+.sev_info     { background: var(--card2); color: var(--text3); border: 1px solid var(--line); }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 28px 0;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text3);
+  cursor: pointer;
+  transition: color 0.1s;
+}
+.tab:hover { color: var(--text2); }
+.tabActive { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Content */
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px 28px;
+}
+
+/* Findings */
+.findingsPanel { display: flex; flex-direction: column; gap: 20px; }
+
+.category {}
+.categoryTitle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+.findingRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.findingContent { flex: 1; min-width: 0; }
+.findingLabel { font-size: 13.5px; line-height: 1.4; }
+.findingEvidence {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.findingSource {
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Sources */
+.sourcesPanel { display: flex; flex-direction: column; gap: 8px; }
+
+.sourceCard {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sourceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.sourceHeader:hover { background: var(--card2); }
+
+.sourceLeft { display: flex; align-items: center; gap: 9px; }
+
+.sourceDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot_ok    { background: var(--ok); }
+.dot_error { background: var(--sev-crit); }
+.dot_unconfigured { background: var(--text3); }
+.dot_skipped { background: var(--line2); }
+
+.sourceName { font-size: 13.5px; font-weight: 500; }
+.sourceLatency { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); }
+
+.sourceRight { display: flex; align-items: center; gap: 8px; }
+.findingCount { font-size: 12px; color: var(--text2); }
+.errLabel { font-size: 11px; color: var(--sev-crit); }
+.chevron { font-size: 10px; color: var(--text3); }
+
+.sourceBody { padding: 0 14px 14px; }
+.errorMsg { font-size: 12px; color: var(--sev-crit); margin-bottom: 8px; }
+.raw {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text2);
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  overflow: auto;
+  max-height: 300px;
+  white-space: pre;
+}
+
+/* States */
+.loadingState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--text2);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--line2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.errorState {
+  margin: 24px 28px;
+  padding: 14px;
+  background: rgba(242,85,85,.08);
+  border: 1px solid rgba(242,85,85,.2);
+  border-radius: 8px;
+  color: var(--sev-crit);
+  font-size: 13px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text3);
+  font-size: 14px;
+  padding: 40px;
+}

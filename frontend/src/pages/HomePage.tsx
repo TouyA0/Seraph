@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { detectArtifact } from '@/utils/api'
 import styles from './HomePage.module.css'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -12,36 +14,40 @@ const TYPE_LABELS: Record<string, string> = {
   unknown: '—',
 }
 
-interface DetectResult {
-  value: string
-  type: string
-  candidates: string[]
-}
-
 export default function HomePage() {
   const [input, setInput] = useState('')
-  const [detected, setDetected] = useState<DetectResult | null>(null)
+  const [detectedType, setDetectedType] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
 
-  const handleChange = async (value: string) => {
+  const handleChange = (value: string) => {
     setInput(value)
-    if (!value.trim()) {
-      setDetected(null)
-      return
-    }
+    setDetectedType(null)
+    clearTimeout(debounceRef.current)
+    if (!value.trim()) return
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await detectArtifact(value)
+        setDetectedType(res.type)
+      } catch {
+        // backend pas encore dispo
+      }
+    }, 300)
+  }
+
+  const handleSubmit = async () => {
+    if (!input.trim() || loading) return
     setLoading(true)
     try {
-      const res = await fetch('/api/detect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value }),
-      })
-      if (res.ok) setDetected(await res.json())
-    } catch {
-      // backend pas encore dispo — mode offline
+      navigate(`/investigate?q=${encodeURIComponent(input.trim())}${detectedType ? `&t=${detectedType}` : ''}`)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSubmit()
   }
 
   return (
@@ -63,22 +69,31 @@ export default function HomePage() {
             placeholder="185.220.101.5 · evil.com · CVE-2024-3094 · …"
             value={input}
             onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={handleKey}
             autoFocus
             spellCheck={false}
           />
-          {detected && detected.type !== 'unknown' && (
-            <div className={styles.badge}>
-              {TYPE_LABELS[detected.type] ?? detected.type}
-            </div>
+          {detectedType && detectedType !== 'unknown' && (
+            <div className={styles.badge}>{TYPE_LABELS[detectedType] ?? detectedType}</div>
           )}
           {loading && <div className={styles.loader} />}
         </div>
 
-        {detected && (
+        <div className={styles.actions}>
+          <button
+            className={styles.btnPrimary}
+            onClick={handleSubmit}
+            disabled={!input.trim() || loading}
+          >
+            Lancer l'investigation
+          </button>
+        </div>
+
+        {detectedType && (
           <div className={styles.hint}>
-            {detected.type === 'unknown'
+            {detectedType === 'unknown'
               ? 'Type non reconnu — coller un bloc de texte pour extraire les IOC.'
-              : `Type détecté : ${TYPE_LABELS[detected.type]}. Appuyez sur Entrée pour lancer l'investigation.`}
+              : `Type détecté : ${TYPE_LABELS[detectedType]}. Appuyez sur Entrée pour lancer.`}
           </div>
         )}
       </div>
