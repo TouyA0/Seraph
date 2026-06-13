@@ -58,3 +58,9 @@ export async function getInvestigations(): Promise<unknown[]> {
   if (!r.ok) throw new Error(await r.text())
   return r.json()
 }
+
+export async function getConnectorSettings(): Promise<unknown> {
+  const r = await fetch(`${BASE}/settings/connectors`)
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}

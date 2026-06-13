@@ -20,11 +20,17 @@ const CAT_LABELS: Record<string, string> = {
 
 const CONNECTOR_LABELS: Record<string, string> = {
   shodan_internetdb: 'Shodan InternetDB',
-  bgpview_ip: 'BGPView',
+  ip_api: 'ip-api.com',
+  abuseipdb: 'AbuseIPDB',
+  censys: 'Censys',
+  shodan: 'Shodan',
   rdap: 'RDAP / Whois',
   crtsh: 'crt.sh',
   threatfox: 'ThreatFox',
   pulsedive: 'Pulsedive',
+  virustotal: 'VirusTotal',
+  otx: 'AlienVault OTX',
+  urlscan: 'URLScan.io',
 }
 
 function SeverityBadge({ sev }: { sev: string }) {
